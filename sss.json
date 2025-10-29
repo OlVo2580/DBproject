@@ -1,0 +1,39 @@
+{
+  "tables": {
+    "testtable": {
+      "columns": [
+        {
+          "name": "Id",
+          "type": "integer",
+          "default": ""
+        },
+        {
+          "name": "tyestcoulmn",
+          "type": "string",
+          "default": "test"
+        }
+      ],
+      "rows": []
+    },
+    "testcolumn2": {
+      "columns": [
+        {
+          "name": "Id",
+          "type": "integer",
+          "default": ""
+        }
+      ],
+      "rows": []
+    }
+  },
+  "_positions": {
+    "testtable": {
+      "x": 32,
+      "y": 160
+    },
+    "testcolumn2": {
+      "x": 16,
+      "y": 64
+    }
+  }
+}

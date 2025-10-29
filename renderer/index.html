@@ -1,0 +1,385 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mini DB Manager</title>
+    <style>
+      :root {
+        --primary-color: #2196F3;
+        --secondary-color: #1976D2;
+        --success-color: #4CAF50;
+        --error-color: #F44336;
+        --background-color: #F5F5F5;
+        --surface-color: #FFFFFF;
+        --text-primary: #212121;
+        --text-secondary: #757575;
+        --border-color: #E0E0E0;
+      }
+
+      body { 
+        font-family: 'Segoe UI', Arial, sans-serif; 
+        margin: 0; 
+        display: flex; 
+        height: 100vh;
+        background-color: var(--background-color);
+        color: var(--text-primary);
+      }
+
+      #sidebar { 
+        width: 300px; 
+        background: var(--surface-color);
+        border-right: 1px solid var(--border-color); 
+        padding: 20px; 
+        box-sizing: border-box;
+        box-shadow: 2px 0 8px rgba(0,0,0,0.1);
+      }
+
+      #main { 
+        flex: 1; 
+        padding: 24px; 
+        box-sizing: border-box;
+        background: var(--background-color);
+      }
+
+      .db-item { 
+        padding: 12px; 
+        background: var(--surface-color);
+        border-radius: 8px;
+        margin-bottom: 12px; 
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      }
+
+      .db-item:hover {
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        transform: translateY(-1px);
+      }
+
+      .table-item { 
+        padding: 8px 12px;
+        background: #f8f9fa;
+        border-radius: 6px;
+        margin: 8px 0;
+        transition: all 0.2s ease;
+      }
+
+      .table-item:hover {
+        background: #e9ecef;
+      }
+
+      input, select, textarea { 
+        font-size: 14px;
+        padding: 8px 12px;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        transition: all 0.2s;
+      }
+
+      input:focus, select:focus, textarea:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.1);
+      }
+
+      button {
+        font-size: 14px;
+        padding: 8px 16px;
+        border-radius: 6px;
+        border: none;
+        background: var(--primary-color);
+        color: white;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      button:hover {
+        background: var(--secondary-color);
+        transform: translateY(-1px);
+      }
+
+      button:active {
+        transform: translateY(0);
+      }
+
+      .modal-backdrop { 
+        position: fixed; 
+        inset: 0; 
+        display: none; 
+        align-items: center; 
+        justify-content: center; 
+        background: rgba(0,0,0,0.5); 
+        z-index: 60;
+        backdrop-filter: blur(4px);
+      }
+
+      .modal-content { 
+        background: var(--surface-color);
+        border: none;
+        padding: 24px;
+        width: 480px;
+        box-shadow: 0 12px 32px rgba(0,0,0,0.2); 
+        border-radius: 12px; 
+        transform: translateY(16px) scale(0.98); 
+        opacity: 0; 
+        transition: transform 200ms cubic-bezier(0.4, 0, 0.2, 1), opacity 200ms ease;
+      }
+
+      .modal-backdrop.show { 
+        display: flex; 
+      }
+
+      .modal-backdrop.show .modal-content { 
+        transform: translateY(0) scale(1); 
+        opacity: 1; 
+      }
+
+      #toast-container { 
+        position: fixed; 
+        right: 24px; 
+        bottom: 24px; 
+        display: flex; 
+        flex-direction: column; 
+        gap: 12px; 
+        z-index: 120; 
+      }
+
+      .toast { 
+        background: var(--text-primary); 
+        color: white; 
+        padding: 12px 20px;
+        border-radius: 8px; 
+        box-shadow: 0 8px 24px rgba(0,0,0,0.2); 
+        opacity: 0; 
+        transform: translateY(16px); 
+        transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+        min-width: 280px;
+      }
+
+      .toast.show { 
+        opacity: 1; 
+        transform: translateY(0); 
+      }
+
+      .toast.error { 
+        background: var(--error-color); 
+      }
+
+      .toast.success { 
+        background: var(--success-color); 
+      }
+
+      h2, h3, h4 {
+        color: var(--text-primary);
+        margin-bottom: 16px;
+      }
+
+      #diagram {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      }
+
+      #table-settings {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        margin-top: 24px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="sidebar">
+      <h3>Databases</h3>
+      <div id="db-list" style="margin-bottom: 20px;"></div>
+      
+      <div class="sidebar-section">
+        <h4 style="margin: 0 0 12px 0">Create Database</h4>
+        <div class="input-group" style="display: flex; gap: 8px; margin-bottom: 20px;">
+          <input id="new-db-name" placeholder="New DB name" style="flex: 1;" />
+          <button id="create-db">Create</button>
+        </div>
+      </div>
+
+      <div class="sidebar-section" style="margin-top: 20px;">
+        <button id="create-table-global" style="width: 100%; margin-bottom: 12px;">
+          Create Table in selected DB
+        </button>
+
+        <div style="display: flex; gap: 8px;">
+          <button id="export-db-btn" style="flex: 1; background: var(--success-color);">Export DB</button>
+          <button id="import-db-btn" style="flex: 1; background: var(--success-color);">Import DB</button>
+        </div>
+      </div>
+    </div>
+    <div id="main" style="display:flex;gap:24px;">
+      <div id="inspector" style="width:420px;min-width:320px;">
+        <div class="card" style="background: white; padding: 24px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+          <h2 id="db-title" style="margin-top: 0;">No database selected</h2>
+          <div id="tables-section" style="display:none">
+            <h3 style="margin-top: 24px;">Tables</h3>
+            <div id="table-list" style="margin-bottom: 24px;"></div>
+            <div id="table-detail"></div>
+          </div>
+        </div>
+
+        <div id="table-settings" style="display:none; margin-top:24px; background: white; padding: 24px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+          <h3 id="table-settings-title" style="margin-top: 0;"></h3>
+          <div id="table-columns-list" style="margin-bottom: 24px;"></div>
+          
+          <div class="form-section">
+            <h4 style="margin-bottom: 16px;">Add Column</h4>
+            <div style="display: flex; flex-direction: column; gap: 16px;">
+              <div>
+                <label style="display: block; margin-bottom: 8px;">Column Name</label>
+                <input id="col-name" style="width: 100%;" 
+                  placeholder="Enter column name (letters, numbers, underscore)" 
+                  pattern="^[A-Za-z_][A-Za-z0-9_]*$" 
+                  title="Start with letter or underscore, then letters, numbers, underscores" />
+              </div>
+
+              <div>
+                <label style="display: block; margin-bottom: 8px;">Data Type</label>
+                <select id="col-type" title="Select data type" style="width: 100%;">
+                  <option value="integer">integer (whole numbers)</option>
+                  <option value="real">real (decimal numbers)</option>
+                  <option value="char">char (single character)</option>
+                  <option value="string" selected>string (text)</option>
+                  <option value="time">time (HH:MM[:SS])</option>
+                  <option value="timeInvl">timeInvl (duration HH:MM:SS)</option>
+                </select>
+              </div>
+
+              <div>
+                <label style="display: block; margin-bottom: 8px;">Default Value</label>
+                <div id="default-container" style="width: 100%;">
+                  <input id="col-default" placeholder="Enter default value" style="width: 100%;" />
+                </div>
+              </div>
+
+              <div style="display: flex; gap: 16px;">
+                <label style="display: flex; align-items: center; gap: 8px;">
+                  <input type="checkbox" id="col-pk" style="margin: 0;" />
+                  Primary Key
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px;">
+                  <input type="checkbox" id="col-nullable" style="margin: 0;" />
+                  Nullable
+                </label>
+              </div>
+
+              <div>
+                <label style="display: block; margin-bottom: 8px;">Foreign Key</label>
+                <div style="display: flex; gap: 8px;">
+                  <select id="col-fk-target" style="flex: 2;"><option value="">-- none --</option></select>
+                  <select id="col-fk-ondelete" style="flex: 1;">
+                    <option value="restrict">RESTRICT</option>
+                    <option value="cascade">CASCADE</option>
+                  </select>
+                </div>
+              </div>
+
+              <button id="add-column-btn" style="width: 100%;">Add Column</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="diagram-pane" style="flex:1;">
+        <div class="card" style="background: white; padding: 24px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+            <h3 style="margin:0">Schema Diagram</h3>
+            <div style="display: flex; gap: 8px;">
+              <button id="zoom-in" style="padding: 8px; min-width: 40px;">+</button>
+              <button id="zoom-out" style="padding: 8px; min-width: 40px;">-</button>
+              <button id="fit-diagram">Fit</button>
+              <button id="auto-layout">Auto Layout</button>
+            </div>
+          </div>
+          <div id="diagram-wrapper" style="width:100%;height:calc(100vh - 220px);overflow:auto;border-radius:8px;background:#f8f9fa;">
+            <svg id="diagram" width="1200" height="800" style="display:block"></svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  <!-- Create Table Modal -->
+    <div id="create-table-modal" class="modal-backdrop">
+      <div class="modal-content">
+        <h3 style="margin-top: 0;">Create Table</h3>
+        <div style="margin: 24px 0;">
+          <label style="display: block; margin-bottom: 8px;">Table Name</label>
+          <input id="modal-table-name" placeholder="Enter table name" style="width: 100%;" />
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 12px;">
+          <button id="modal-cancel" style="background: var(--text-secondary);">Cancel</button>
+          <button id="modal-create-table">Create</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit Column Modal -->
+    <div id="edit-column-modal" class="modal-backdrop">
+      <div class="modal-content">
+        <h3 id="edit-column-title" style="margin-top: 0;">Edit Column</h3>
+        <div style="margin: 24px 0; display: flex; flex-direction: column; gap: 16px;">
+          <div>
+            <label style="display: block; margin-bottom: 8px;">Name (read-only)</label>
+            <input id="edit-col-name" readonly style="width: 100%; background: #f5f5f5;" />
+          </div>
+
+          <div>
+            <label style="display: block; margin-bottom: 8px;">Type</label>
+            <select id="edit-col-type" style="width: 100%;">
+              <option value="integer">integer</option>
+              <option value="real">real</option>
+              <option value="char">char</option>
+              <option value="string" selected>string</option>
+              <option value="time">time</option>
+              <option value="timeInvl">timeInvl</option>
+            </select>
+          </div>
+
+          <div>
+            <label style="display: block; margin-bottom: 8px;">Default Value</label>
+            <input id="edit-col-default" style="width: 100%;" />
+          </div>
+
+          <div style="display: flex; gap: 16px;">
+            <label style="display: flex; align-items: center; gap: 8px;">
+              <input type="checkbox" id="edit-col-pk" style="margin: 0;" />
+              Primary Key
+            </label>
+            <label style="display: flex; align-items: center; gap: 8px;">
+              <input type="checkbox" id="edit-col-nullable" style="margin: 0;" />
+              Nullable
+            </label>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 12px;">
+          <button id="edit-col-cancel" style="background: var(--text-secondary);">Cancel</button>
+          <button id="edit-col-save">Save Changes</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Confirm Modal -->
+    <div id="confirm-modal" class="modal-backdrop">
+      <div class="modal-content">
+        <h3 id="confirm-title" style="margin-top: 0;">Confirm Action</h3>
+        <div id="confirm-message" style="margin: 24px 0;"></div>
+        <div style="display: flex; justify-content: flex-end; gap: 12px;">
+          <button id="confirm-no" style="background: var(--text-secondary);">Cancel</button>
+          <button id="confirm-yes" style="background: var(--error-color);">Confirm</button>
+        </div>
+      </div>
+    </div>
+    <!-- Toasts -->
+    <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+    <script src="renderer.js"></script>
+  </body>
+</html>

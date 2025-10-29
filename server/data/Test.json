@@ -1,0 +1,53 @@
+{
+  "tables": {
+    "Manegers": {
+      "columns": [
+        {
+          "name": "ManegersId",
+          "type": "integer",
+          "pk": true,
+          "nullable": false
+        },
+        {
+          "name": "Start_time",
+          "type": "time",
+          "default": ""
+        }
+      ],
+      "rows": [],
+      "_pk": "ManegersId"
+    },
+    "Name": {
+      "columns": [
+        {
+          "name": "NameId",
+          "type": "integer",
+          "pk": true,
+          "nullable": false
+        },
+        {
+          "name": "ManegersId",
+          "type": "time",
+          "default": "",
+          "fk": {
+            "table": "Manegers",
+            "column": "ManegersId",
+            "onDelete": "restrict"
+          }
+        }
+      ],
+      "rows": [],
+      "_pk": "NameId"
+    }
+  },
+  "__positions": {
+    "Manegers": {
+      "x": 400,
+      "y": 176
+    },
+    "Name": {
+      "x": 16,
+      "y": 176
+    }
+  }
+}
